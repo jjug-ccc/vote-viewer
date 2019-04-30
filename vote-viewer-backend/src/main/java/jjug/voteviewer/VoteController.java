@@ -29,11 +29,11 @@ public class VoteController {
             .uri("/v1/seminars/{seminarId}/votes", seminarId)
             .retrieve()
             .bodyToFlux(JsonNode.class)
-            .flatMapIterable(this::toVotes);
+            .flatMapIterable(VoteController::toVotes);
         return currentVotes.concatWith(VoteStream.INSTANCE.flux());
     }
 
-    List<Vote> toVotes(JsonNode n) {
+    public static List<Vote> toVotes(JsonNode n) {
         String sessionId = n.get("session").get("sessionId").asText();
         String sessionName = n.get("session").get("sessionName").asText();
         return StreamSupport.stream(n.get("summary").get("details").spliterator(), false)

@@ -19,7 +19,7 @@ public class Vote implements Serializable {
     private final int count;
 
     @JsonCreator
-    public Vote(@JsonProperty("sesisonId") String sessionId,
+    public Vote(@JsonProperty("sessionId") String sessionId,
                 @JsonProperty("sessionName") String sessionName,
                 @JsonProperty("satisfaction") String satisfaction,
                 @JsonProperty("count") int count) {

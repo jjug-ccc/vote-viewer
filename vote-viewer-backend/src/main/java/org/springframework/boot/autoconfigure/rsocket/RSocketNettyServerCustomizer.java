@@ -23,11 +23,16 @@ import io.rsocket.transport.netty.server.WebsocketRouteTransport;
 import jjug.voteviewer.Vote;
 import jjug.voteviewer.VoteStream;
 import org.springframework.boot.web.embedded.netty.NettyServerCustomizer;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.messaging.rsocket.MessageHandlerAcceptor;
+import org.springframework.util.StreamUtils;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import reactor.netty.http.server.HttpServer;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 
 /**
  * {@link NettyServerCustomizer} that configures an RSocket Websocket endpoint.
@@ -46,14 +51,21 @@ class RSocketNettyServerCustomizer implements NettyServerCustomizer {
         this.messageHandlerAcceptor = messageHandlerAcceptor;
     }
 
+    private Mono<String> readFile(String path) {
+        return Mono.fromCallable(() -> StreamUtils.copyToString(new ClassPathResource(path).getInputStream(), StandardCharsets.UTF_8))
+            .subscribeOn(Schedulers.elastic());
+    }
+
     @Override
     public HttpServer apply(HttpServer httpServer) {
         ServerTransport.ConnectionAcceptor acceptor = RSocketFactory.receive()
             .acceptor(this.messageHandlerAcceptor).toConnectionAcceptor();
-
         // Hack
         ObjectMapper objectMapper = new ObjectMapper();
         return httpServer.route((routes) -> routes
+            .get("/", (req, res) -> res.sendString(readFile("META-INF/resources/index.html")))
+            .get("/static/{x}/{y}", (req, res) -> res.sendString(readFile("META-INF/resources/static/" + req.param("x") + "/" + req.param("y"))))
+            .get("/manifest.json", (req, res) -> res.sendString(readFile("META-INF/resources/manifest.json")))
             .post("/webhook", (req, res) -> req.receive()
                 .asByteArray()
                 .map(x -> {
