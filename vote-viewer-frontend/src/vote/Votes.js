@@ -1,9 +1,10 @@
 import _ from 'lodash';
 
 export default class Votes {
-    constructor(sessionId, sessionName) {
+    constructor(sessionId, sessionName, speakerName) {
         this.sessionId = sessionId;
         this.sessionName = sessionName;
+        this.speakerName = speakerName;
         this.voteMap = new Map();
     }
 

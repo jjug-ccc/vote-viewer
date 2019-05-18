@@ -30,12 +30,13 @@ export default class App extends Component {
         this.voteClient = new VoteClient();
         let that = this;
         let votesMap = new Map();
-        const onConect = () => this.voteClient.votes(vote => {
+        const onConnect = () => this.voteClient.votes(vote => {
+            console.log(vote);
             let votes;
             if (votesMap.has(vote.sessionId)) {
                 votes = votesMap.get(vote.sessionId);
             } else {
-                votes = new Votes(vote.sessionId, vote.sessionName);
+                votes = new Votes(vote.sessionId, vote.sessionName, vote.speakerName);
                 votesMap.set(vote.sessionId, votes);
             }
             votes.add(vote);
@@ -45,8 +46,7 @@ export default class App extends Component {
             });
         });
         setInterval(() => {
-            let items = Array.from(votesMap.values())
-                .filter(votes => votes.count() >= 2);
+            let items = Array.from(votesMap.values());
             items.sort(sortByNsat);
             while (items.length > 7) {
                 items.pop();
@@ -55,7 +55,7 @@ export default class App extends Component {
                 items: items,
             });
         }, 2000);
-        this.voteClient.connect(onConect);
+        this.voteClient.connect(onConnect);
     }
 
     render() {
@@ -68,9 +68,9 @@ export default class App extends Component {
                     </p>
                     <ul>
                         <PoseGroup>{this.state.items
-                            .map(votes =>
+                            .map((votes, i) =>
                                 <Item key={votes.sessionId}>
-                                    <strong>{votes.sessionName}</strong>: {votes.nsat()} (投票数: {votes.count()})
+                                    {i+1}.  <strong>{votes.sessionName}</strong>/{votes.speakerName}: {votes.nsat()} (投票数: {votes.count()})
                                 </Item>)}
                         </PoseGroup>
                     </ul>

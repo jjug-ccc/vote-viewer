@@ -2,16 +2,28 @@ package jjug.voteviewer;
 
 public class VoteBuilder {
 
-    private int count;
+    int count;
 
-    private String satisfaction;
+    String satisfaction;
 
-    private String sessionId;
+    String sessionId;
 
-    private String sessionName;
+    String sessionName;
+
+    String speakerName;
+
+    public VoteBuilder() {
+    }
+
+    public VoteBuilder(Vote vote) {
+        this.sessionId = vote.getSessionId();
+        this.sessionName = vote.getSessionName();
+        this.satisfaction = vote.getSatisfaction();
+        this.count = vote.getCount();
+    }
 
     public Vote createVote() {
-        return new Vote(sessionId, sessionName, satisfaction, count);
+        return new Vote(sessionId, sessionName, satisfaction, speakerName, count);
     }
 
     public VoteBuilder withCount(int count) {
@@ -31,6 +43,11 @@ public class VoteBuilder {
 
     public VoteBuilder withSessionName(String sessionName) {
         this.sessionName = sessionName;
+        return this;
+    }
+
+    public VoteBuilder withSpeakerName(String speakerName) {
+        this.speakerName = speakerName;
         return this;
     }
 }

@@ -7,6 +7,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -15,25 +16,43 @@ public class VoteController {
 
     private final WebClient webClient;
 
-    public VoteController(WebClient.Builder builder) {
+    private final VoteProps props;
+
+    private final Map<String, String> speakers;
+
+    public VoteController(WebClient.Builder builder, VoteProps props) {
         this.webClient = builder
-            .baseUrl("http://localhost:8080")
-            .defaultHeaders(httpHeaders -> httpHeaders.setBasicAuth("demo", "demo"))
+            .baseUrl(props.getVoteUrl())
+            .defaultHeaders(httpHeaders -> httpHeaders.setBasicAuth(props.getClientId(), props.getClientSecret()))
             .build();
+        this.speakers = this.webClient
+            .get()
+            .uri("https://jjug-cfp.cfapps.io/v1/conferences/{seminarId}/submissions", props.getConferenceId())
+            .retrieve()
+            .bodyToMono(JsonNode.class)
+            .map(n -> StreamSupport.stream(n.get("_embedded").get("submissions").spliterator(), false)
+                .collect(Collectors.toMap(x -> x.get("title").asText(),
+                    x -> StreamSupport.stream(x.get("speakers").spliterator(), false)
+                        .map(s -> s.get("name").asText())
+                        .collect(Collectors.joining(", ")))))
+            .log("submission")
+            .block();
+        ;
+        this.props = props;
     }
 
     @MessageMapping("votes")
     public Flux<Vote> votes() {
-        String seminarId = "b8b058ac-a99b-4892-96f8-f4de3924511e";
-        Flux<Vote> currentVotes = this.webClient.get()
-            .uri("/v1/seminars/{seminarId}/votes", seminarId)
+        Flux<VoteBuilder> currentVotes = this.webClient.get()
+            .uri("/v1/seminars/{seminarId}/votes", this.props.getSeminarId())
             .retrieve()
             .bodyToFlux(JsonNode.class)
             .flatMapIterable(VoteController::toVotes);
-        return currentVotes.concatWith(VoteStream.INSTANCE.flux());
+        return currentVotes.concatWith(VoteStream.INSTANCE.flux())
+            .map(builder -> builder.withSpeakerName(this.speakers.get(builder.sessionName)).createVote()).log("vote");
     }
 
-    public static List<Vote> toVotes(JsonNode n) {
+    public static List<VoteBuilder> toVotes(JsonNode n) {
         String sessionId = n.get("session").get("sessionId").asText();
         String sessionName = n.get("session").get("sessionName").asText();
         return StreamSupport.stream(n.get("summary").get("details").spliterator(), false)
@@ -41,8 +60,7 @@ public class VoteController {
                 .withSessionId(sessionId)
                 .withSessionName(sessionName)
                 .withCount(d.get("count").asInt())
-                .withSatisfaction(d.get("value").asText())
-                .createVote())
+                .withSatisfaction(d.get("value").asText()))
             .collect(Collectors.toList());
     }
 }

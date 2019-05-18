@@ -10,11 +10,14 @@ export default class VoteClient {
                 dataMimeType: 'application/json',
                 metadataMimeType: 'text/plain'
             },
-            transport: new RSocketWebSocketClient({url: 'ws://localhost:7777/rsocket'}),
+            transport: new RSocketWebSocketClient({
+                url: window.location.href.endsWith(".io/") ? window.location.href.replace("https", "wss") + 'rsocket' : 'ws://localhost:7777/rsocket'
+            }),
         });
     }
 
     connect(onComplete) {
+        let that = this;
         this.client.connect()
             .subscribe({
                 onComplete: socket => {
@@ -24,6 +27,7 @@ export default class VoteClient {
                 onError: error => {
                     console.error(error);
                     alert('onError! => ' + error.message);
+                    window.location.reload();
                 },
                 onSubscribe: cancel => {/* call cancel() to abort */
                 }
@@ -34,6 +38,7 @@ export default class VoteClient {
         let maxInFlight = 32;
         let current = maxInFlight;
         let subscription;
+        let that = this;
         this.socket && this.socket.requestStream({
             data: JSON.stringify({}),
             metadata: 'votes'
@@ -56,6 +61,7 @@ export default class VoteClient {
             onError: error => {
                 console.error('onError', error);
                 alert('onError! => ' + error.message);
+                window.location.reload();
             }
         });
     }

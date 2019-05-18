@@ -6,9 +6,9 @@ import reactor.core.publisher.UnicastProcessor;
 public enum VoteStream {
     INSTANCE;
 
-    private final UnicastProcessor<Vote> processor;
+    private final UnicastProcessor<VoteBuilder> processor;
 
-    private final Flux<Vote> stream;
+    private final Flux<VoteBuilder> stream;
 
     VoteStream() {
         this.processor = UnicastProcessor.create();
@@ -18,10 +18,10 @@ public enum VoteStream {
     }
 
     public void next(Vote vote) {
-        this.processor.onNext(vote);
+        this.processor.onNext(new VoteBuilder(vote));
     }
 
-    public Flux<Vote> flux() {
+    public Flux<VoteBuilder> flux() {
         return this.stream;
     }
 }

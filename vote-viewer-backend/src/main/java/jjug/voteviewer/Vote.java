@@ -16,16 +16,21 @@ public class Vote implements Serializable {
 
     private final String satisfaction;
 
+    private final String speakerName;
+
     private final int count;
+
 
     @JsonCreator
     public Vote(@JsonProperty("sessionId") String sessionId,
                 @JsonProperty("sessionName") String sessionName,
                 @JsonProperty("satisfaction") String satisfaction,
+                @JsonProperty("speakerName") String speakerName,
                 @JsonProperty("count") int count) {
         this.sessionId = sessionId;
         this.sessionName = sessionName;
         this.satisfaction = satisfaction;
+        this.speakerName = speakerName;
         this.count = count;
     }
 
@@ -41,6 +46,10 @@ public class Vote implements Serializable {
         return satisfaction;
     }
 
+    public String getSpeakerName() {
+        return speakerName;
+    }
+
     public int getCount() {
         return count;
     }
@@ -51,12 +60,13 @@ public class Vote implements Serializable {
             .append("sessionId", sessionId)
             .append("sessionName", sessionName)
             .append("satisfaction", satisfaction)
+            .append("speakerName", speakerName)
             .append("count", count)
             .toString();
     }
 
     public Vote merge(Vote vote) {
         Assert.isTrue(Objects.equals(this.sessionId, vote.sessionId) && Objects.equals(this.satisfaction, vote.satisfaction), "Can't merge a different vote");
-        return new Vote(this.sessionId, this.sessionName, this.satisfaction, this.count + vote.count);
+        return new Vote(this.sessionId, this.sessionName, this.satisfaction, this.speakerName, this.count + vote.count);
     }
 }
