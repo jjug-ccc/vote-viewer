@@ -1,8 +1,10 @@
 package jjug.voteviewer;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.context.properties.ConstructorBinding;
 
 @ConfigurationProperties
+@ConstructorBinding
 public class VoteProps {
 
     private final String voteUrl;

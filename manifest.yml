@@ -1,0 +1,12 @@
+applications:
+- name: jjug-vote-viewer
+  memory: 768m
+  buildpack: java_buildpack_offline
+  path: vote-viewer-backend/target/vote-viewer-backend-0.0.1-SNAPSHOT.jar
+  env:
+    VOTE_URL: https://jjug-enquete.cfapps.io
+    SEMINAR_ID: c2c4fd53-32e4-4313-b2df-3caccb0d09b3
+    CONFERENCE_ID: 4abde357-9994-4578-b760-a1698ff6f338
+    JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 11.+}}'
+  services:
+  - jjug-enquete-admin-client

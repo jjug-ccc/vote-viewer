@@ -1,10 +1,17 @@
 package jjug.voteviewer;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.Map;
@@ -50,6 +57,16 @@ public class VoteController {
             .flatMapIterable(VoteController::toVotes);
         return currentVotes.concatWith(VoteStream.INSTANCE.flux())
             .map(builder -> builder.withSpeakerName(this.speakers.get(builder.sessionName)).createVote()).log("vote");
+    }
+
+    @GetMapping
+    public ResponseEntity<?> redirect(UriComponentsBuilder builder) {
+        return ResponseEntity.status(HttpStatus.SEE_OTHER).location(builder.replacePath("index.html").build().toUri()).build();
+    }
+
+    @PostMapping(path = "webhook")
+    public Mono<Void> webhook(@RequestBody Mono<Vote> vote) {
+        return vote.doOnNext(VoteStream.INSTANCE::next).then();
     }
 
     public static List<VoteBuilder> toVotes(JsonNode n) {

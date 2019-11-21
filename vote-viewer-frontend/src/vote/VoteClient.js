@@ -3,15 +3,16 @@ import RSocketWebSocketClient from "rsocket-websocket-client";
 
 export default class VoteClient {
     constructor() {
+        var href = window.location.href;
         this.client = new RSocketClient({
             setup: {
                 keepAlive: 60000,
                 lifetime: 180000,
                 dataMimeType: 'application/json',
-                metadataMimeType: 'text/plain'
+                metadataMimeType: 'message/x.rsocket.routing.v0'
             },
             transport: new RSocketWebSocketClient({
-                url: window.location.href.endsWith(".io/") ? window.location.href.replace("https", "wss") + 'rsocket' : 'ws://localhost:7777/rsocket'
+                url: href.indexOf('.io') > 0 ? (href.substring(0, href.indexOf('.io') + 3)).replace("https", "wss") + '/rsocket' : 'ws://localhost:7777/rsocket'
             }),
         });
     }
@@ -41,7 +42,7 @@ export default class VoteClient {
         let that = this;
         this.socket && this.socket.requestStream({
             data: JSON.stringify({}),
-            metadata: 'votes'
+            metadata: this.routingMetadata('votes')
         }).subscribe({
             onSubscribe: sub => {
                 subscription = sub;
@@ -64,5 +65,9 @@ export default class VoteClient {
                 window.location.reload();
             }
         });
+    }
+
+    routingMetadata(route) {
+        return String.fromCharCode(route.length) + route;
     }
 }
